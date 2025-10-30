@@ -1,11 +1,35 @@
 import { useState } from "react";
 import PopUp from "./PopUp";
+import { useAssignment } from "../context/AssignmentContext";
 
 const CreateAssignment = () => {
+  const { addAssignment, assignments } = useAssignment();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
   const [link, setLink] = useState("");
+
+  const handleCreate = () => {
+    if (!title.trim() || !link.trim()) {
+      return alert("Please provide a title and drive link.");
+    }
+    // Optionally pass list of students — using union of known students in system
+    const knownStudents = Array.from(
+      new Set(assignments.flatMap((a) => Object.keys(a.submissions || {})))
+    );
+    const newA = addAssignment({
+      title,
+      desc,
+      drive: link,
+      students: knownStudents,
+    });
+    // reset
+    setTitle("");
+    setDesc("");
+    setLink("");
+    setOpen(true);
+  };
+
   return (
     <div className="flex flex-col items-stretch justify-start rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.2)] bg-[#101922] p-6 lg:p-8">
       <div className="flex flex-col items-start gap-2 mb-6">
@@ -16,7 +40,13 @@ const CreateAssignment = () => {
           Fill in the details below to add a new assignment to the system.
         </p>
       </div>
-      <form onSubmit={(e) => e.preventDefault()}>
+
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleCreate();
+        }}
+      >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
           <label className="flex flex-col flex-1">
             <p className="text-gray-300 text-sm font-medium leading-normal pb-2">
@@ -37,11 +67,12 @@ const CreateAssignment = () => {
             </p>
             <textarea
               className="form-input flex w-full min-w-0 flex-1 resize-y overflow-hidden rounded-lg text-gray-200 bg-gray-800 focus:outline-0 focus:ring-2 focus:ring-[#aec6cf]/50 border border-gray-600 focus:border-[#aec6cf] min-h-28 placeholder:text-[#6c757d] p-4 text-base font-normal leading-normal"
-              placeholder="Enter a detailed description, including requirements and guidelines for the assignment."
+              placeholder="Enter a detailed description..."
               value={desc}
               onChange={(e) => setDesc(e.target.value)}
             ></textarea>
           </label>
+
           <label className="flex flex-col flex-1">
             <p className="text-gray-300 text-sm font-medium leading-normal pb-2">
               Drive Link
@@ -59,12 +90,11 @@ const CreateAssignment = () => {
               />
             </div>
           </label>
+
           <div className="flex justify-end mt-6">
             <button
-              className="flex min-w-[120px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-11 px-6 bg-[#137fec] text-white text-base font-bold leading-normal tracking-wide hover:bg-opacity-80 transition-colors"
-              onClick={() => {
-                setOpen(true);
-              }}
+              type="submit"
+              className="flex min-w-[120px] items-center justify-center rounded-lg h-11 px-6 bg-[#137fec] text-white text-base font-bold hover:bg-opacity-80 transition-colors"
             >
               <span className="truncate">Create Assignment</span>
             </button>
@@ -78,7 +108,7 @@ const CreateAssignment = () => {
         </span>
         <h3 className="text-white text-xl font-bold">New Assignment Added</h3>
         <p className="text-gray-400 mt-2">
-          You can see this assignment in you dashboard
+          You can see this assignment in your dashboard
         </p>
       </PopUp>
     </div>

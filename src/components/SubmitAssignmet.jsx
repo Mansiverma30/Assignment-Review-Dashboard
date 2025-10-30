@@ -1,7 +1,9 @@
 import { useState } from "react";
-import PopUp from "./PopUp";
+import Modal from "./PopUp"; // or reuse PopUp
+import { useAssignment } from "../context/AssignmentContext";
 
-const SubmitAssignment = () => {
+const SubmitAssignment = ({ assignmentId, onDone }) => {
+  const { submitAssignment, currentUser } = useAssignment();
   const [file, setFile] = useState(null);
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
@@ -10,126 +12,114 @@ const SubmitAssignment = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!file || !title) return alert("Please fill all required fields.");
+    if (!file && !title) {
+      return alert("Please add a file or title before submitting.");
+    }
     setConfirmOpen(true);
   };
 
   const confirmSubmit = () => {
+    // optionally collect file meta
+    const fileMeta = file
+      ? { name: file.name, size: file.size, type: file.type }
+      : null;
+    submitAssignment({
+      assignmentId,
+      studentName: currentUser.name,
+      fileMeta,
+    });
     setConfirmOpen(false);
     setSuccess(true);
-    // Later you can add your API call or Context update here
+    // reset
+    setFile(null);
     setTitle("");
     setDesc("");
-    setFile(null);
+    // notify parent (close popup)
+    if (onDone) onDone();
   };
 
   return (
-    <div className="w-full max-w-lg mx-auto bg-[#101922] p-6 rounded-xl shadow-lg">
-      <h2 className="text-white text-lg font-bold mb-4">
-        Submit Your Assignment
-      </h2>
-
+    <div className="w-full">
+      <h3 className="text-white text-lg font-bold mb-4">Submit Assignment</h3>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-gray-300 text-sm font-medium mb-2">
-            Title <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g., Math Homework 1"
-            className="w-full bg-[#0d131b] border border-gray-700 rounded-lg p-2.5 text-white focus:border-[#137fec] outline-none"
-          />
-        </div>
-
-        <div>
-          <label className="block text-gray-300 text-sm font-medium mb-2">
-            Description
-          </label>
-          <textarea
-            value={desc}
-            onChange={(e) => setDesc(e.target.value)}
-            placeholder="Write something about your submission..."
-            className="w-full bg-[#0d131b] border border-gray-700 rounded-lg p-2.5 text-white focus:border-[#137fec] outline-none resize-none h-24"
-          />
-        </div>
-
-        <div>
-          <label className="block text-gray-300 text-sm font-medium mb-2">
-            Upload File <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="file"
-            accept=".pdf,.docx,.zip,.png,.jpg"
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
-            className="block w-full text-sm text-gray-400 
-              file:mr-4 file:py-2 file:px-4 
-              file:rounded-lg file:border-0 
-              file:text-sm file:font-semibold 
-              file:bg-[#137fec] file:text-white 
-              hover:file:bg-[#137fec]/90 cursor-pointer"
-          />
-        </div>
-
-        <button
-          type="submit"
-          className="w-full bg-[#137fec] hover:bg-[#137fec]/90 text-white font-semibold py-2.5 rounded-lg transition-colors"
-        >
-          Submit Assignment
-        </button>
-      </form>
-
-      {/* Confirmation Modal */}
-      <PopUp
-        isOpen={confirmOpen}
-        onClose={() => setConfirmOpen(false)}
-        title="Confirm Submission"
-        maxWidth="max-w-sm"
-      >
-        <h1 className="text-gray-300 text-xl">Confirm Submission</h1>
-        <p className="text-gray-300 mb-4">
-          Are you sure you want to submit{" "}
-          <span className="text-white font-medium">
-            {title || "this assignment"}
-          </span>
-          ? You won’t be able to edit it after submission.
-        </p>
-        <div className="flex justify-end gap-3">
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Optional: short note / title"
+          className="w-full bg-[#0d131b] border border-gray-700 rounded-lg p-2 text-white outline-none"
+        />
+        <textarea
+          value={desc}
+          onChange={(e) => setDesc(e.target.value)}
+          placeholder="Optional description"
+          className="w-full bg-[#0d131b] border border-gray-700 rounded-lg p-2 text-white outline-none h-24"
+        />
+        <input
+          type="file"
+          accept=".pdf,.docx,.zip,.png,.jpg"
+          onChange={(e) => setFile(e.target.files?.[0] || null)}
+          className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#137fec] file:text-white hover:file:bg-[#137fec]/90"
+        />
+        <div className="flex justify-end gap-3 mt-2">
           <button
-            onClick={() => setConfirmOpen(false)}
-            className="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm"
+            type="button"
+            onClick={() => {
+              if (onDone) onDone();
+            }}
+            className="px-4 py-2 rounded-lg bg-gray-700 text-gray-200"
           >
             Cancel
           </button>
           <button
+            type="submit"
+            className="px-4 py-2 rounded-lg bg-[#137fec] text-white"
+          >
+            Submit
+          </button>
+        </div>
+      </form>
+
+      {/* confirmation modal */}
+      <Modal
+        isOpen={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        maxWidth="max-w-sm"
+      >
+        <p className="text-gray-300 mb-4">
+          Are you sure you want to submit? This will mark the assignment as
+          submitted.
+        </p>
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={() => setConfirmOpen(false)}
+            className="px-4 py-2 rounded-lg bg-gray-700 text-gray-200"
+          >
+            Go back
+          </button>
+          <button
             onClick={confirmSubmit}
-            className="px-4 py-2 rounded-lg bg-[#137fec] hover:bg-[#137fec]/90 text-white text-sm font-semibold"
+            className="px-4 py-2 rounded-lg bg-[#137fec] text-white"
           >
             Confirm
           </button>
         </div>
-      </PopUp>
+      </Modal>
 
-      {/* Success Modal */}
-      <PopUp
+      {/* success modal */}
+      <Modal
         isOpen={success}
         onClose={() => setSuccess(false)}
         maxWidth="max-w-sm"
       >
-        <h1 className="text-gray-300 text-xl">Submitted Successfully 🎉</h1>
-        <p className="text-gray-300 mb-4 text-sm">
-          Your assignment{" "}
-          <span className="text-white font-medium">{title}</span> has been
-          submitted successfully.
-        </p>
+        <p className="text-gray-300 mb-4">Submitted successfully ✅</p>
         <button
           onClick={() => setSuccess(false)}
-          className="w-full bg-[#137fec] hover:bg-[#137fec]/90 text-white font-semibold py-2 rounded-lg"
+          className="w-full bg-[#137fec] py-2 rounded-lg text-white"
         >
           Close
         </button>
-      </PopUp>
+      </Modal>
     </div>
   );
 };
