@@ -13,7 +13,7 @@ const CreateAssignment = () => {
     if (!title.trim() || !link.trim()) {
       return alert("Please provide a title and drive link.");
     }
-    // Optionally pass list of students — using union of known students in system
+
     const knownStudents = Array.from(
       new Set(assignments.flatMap((a) => Object.keys(a.submissions || {})))
     );
@@ -23,7 +23,7 @@ const CreateAssignment = () => {
       drive: link,
       students: knownStudents,
     });
-    // reset
+
     setTitle("");
     setDesc("");
     setLink("");

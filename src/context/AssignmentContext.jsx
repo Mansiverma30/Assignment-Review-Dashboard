@@ -27,7 +27,6 @@ export const AssignmentProvider = ({ children }) => {
     return { name: "Mansi", role: "student" };
   });
 
-  // persist assignments on change
   useEffect(() => {
     localStorage.setItem("assignments_v1", JSON.stringify(assignments));
   }, [assignments]);

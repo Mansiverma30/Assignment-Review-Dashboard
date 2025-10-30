@@ -4,14 +4,14 @@ import SubmitAssignment from "./SubmitAssignmet";
 import { useAssignment } from "../context/AssignmentContext";
 
 const AssignmentCard = () => {
-  const { getAssignmentsForUser } = useAssignment();
-  const { currentUser } = useAssignment();
-  const data = getAssignmentsForUser(currentUser.name); // dynamic
-  const [openIndex, setOpenIndex] = useState(null);
+  const { getAssignmentsForUser, currentUser } = useAssignment();
+  const data = getAssignmentsForUser(currentUser.name);
+
+  const [openAssignment, setOpenAssignment] = useState(null);
 
   return (
     <>
-      {data.map((e, i) => (
+      {data.map((e) => (
         <div
           key={e.id}
           className={`flex flex-col justify-start rounded-xl bg-[#101922]/70 p-6 shadow-[0_4px_12px_rgba(0,0,0,0.2)] transition-all duration-300 ${
@@ -46,24 +46,26 @@ const AssignmentCard = () => {
           ) : (
             <button
               className="flex w-full sm:w-auto sm:ml-auto min-w-[120px] items-center justify-center rounded-lg h-10 px-4 bg-[#137fec] text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-[#0e63bd] transition-colors mt-4"
-              onClick={() => setOpenIndex(i)}
+              onClick={() => setOpenAssignment(e)}
             >
               <span className="truncate">Submit Assignment</span>
             </button>
           )}
-
-          <PopUp
-            isOpen={openIndex === i}
-            onClose={() => setOpenIndex(null)}
-            maxWidth="max-w-lg"
-          >
-            <SubmitAssignment
-              assignmentId={e.id}
-              onDone={() => setOpenIndex(null)}
-            />
-          </PopUp>
         </div>
       ))}
+
+      <PopUp
+        isOpen={!!openAssignment}
+        onClose={() => setOpenAssignment(null)}
+        maxWidth="max-w-lg"
+      >
+        {openAssignment && (
+          <SubmitAssignment
+            assignmentId={openAssignment.id}
+            onDone={() => setOpenAssignment(null)}
+          />
+        )}
+      </PopUp>
     </>
   );
 };

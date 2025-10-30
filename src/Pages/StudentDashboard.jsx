@@ -6,7 +6,6 @@ const StudentDashboard = () => {
   const { currentUser, getAssignmentsForUser } = useAssignment();
   const userAssignments = getAssignmentsForUser(currentUser.name);
 
-  // total submitted by this student
   const totalAssignments = userAssignments.length;
   const submitted = userAssignments.filter(
     (a) => a.myStatus === "Submitted"

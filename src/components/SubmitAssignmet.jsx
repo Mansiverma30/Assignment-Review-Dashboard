@@ -1,5 +1,4 @@
 import { useState } from "react";
-import Modal from "./PopUp"; // or reuse PopUp
 import { useAssignment } from "../context/AssignmentContext";
 
 const SubmitAssignment = ({ assignmentId, onDone }) => {
@@ -7,40 +6,40 @@ const SubmitAssignment = ({ assignmentId, onDone }) => {
   const [file, setFile] = useState(null);
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [successMsg, setSuccessMsg] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!file && !title) {
       return alert("Please add a file or title before submitting.");
     }
-    setConfirmOpen(true);
+    setShowConfirm(true);
   };
 
   const confirmSubmit = () => {
-    // optionally collect file meta
     const fileMeta = file
       ? { name: file.name, size: file.size, type: file.type }
       : null;
+
     submitAssignment({
       assignmentId,
       studentName: currentUser.name,
       fileMeta,
     });
-    setConfirmOpen(false);
-    setSuccess(true);
-    // reset
+
+    setShowConfirm(false);
+    setSuccessMsg(true);
     setFile(null);
     setTitle("");
     setDesc("");
-    // notify parent (close popup)
     if (onDone) onDone();
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full relative">
       <h3 className="text-white text-lg font-bold mb-4">Submit Assignment</h3>
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
           type="text"
@@ -61,12 +60,11 @@ const SubmitAssignment = ({ assignmentId, onDone }) => {
           onChange={(e) => setFile(e.target.files?.[0] || null)}
           className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#137fec] file:text-white hover:file:bg-[#137fec]/90"
         />
+
         <div className="flex justify-end gap-3 mt-2">
           <button
             type="button"
-            onClick={() => {
-              if (onDone) onDone();
-            }}
+            onClick={onDone}
             className="px-4 py-2 rounded-lg bg-gray-700 text-gray-200"
           >
             Cancel
@@ -80,46 +78,41 @@ const SubmitAssignment = ({ assignmentId, onDone }) => {
         </div>
       </form>
 
-      {/* confirmation modal */}
-      <Modal
-        isOpen={confirmOpen}
-        onClose={() => setConfirmOpen(false)}
-        maxWidth="max-w-sm"
-      >
-        <p className="text-gray-300 mb-4">
-          Are you sure you want to submit? This will mark the assignment as
-          submitted.
-        </p>
-        <div className="flex justify-end gap-3">
+      {showConfirm && (
+        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col justify-center items-center rounded-lg z-50">
+          <p className="text-gray-300 mb-4 text-center">
+            Are you sure you want to submit?
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowConfirm(false)}
+              className="px-4 py-2 rounded-lg bg-gray-700 text-gray-200"
+            >
+              Go back
+            </button>
+            <button
+              onClick={confirmSubmit}
+              className="px-4 py-2 rounded-lg bg-[#137fec] text-white"
+            >
+              Confirm
+            </button>
+          </div>
+        </div>
+      )}
+
+      {successMsg && (
+        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col justify-center items-center rounded-lg z-50">
+          <p className="text-gray-300 mb-4 text-center">
+            Submitted successfully 🎉
+          </p>
           <button
-            onClick={() => setConfirmOpen(false)}
-            className="px-4 py-2 rounded-lg bg-gray-700 text-gray-200"
-          >
-            Go back
-          </button>
-          <button
-            onClick={confirmSubmit}
+            onClick={() => setSuccessMsg(false)}
             className="px-4 py-2 rounded-lg bg-[#137fec] text-white"
           >
-            Confirm
+            Close
           </button>
         </div>
-      </Modal>
-
-      {/* success modal */}
-      <Modal
-        isOpen={success}
-        onClose={() => setSuccess(false)}
-        maxWidth="max-w-sm"
-      >
-        <p className="text-gray-300 mb-4">Submitted successfully ✅</p>
-        <button
-          onClick={() => setSuccess(false)}
-          className="w-full bg-[#137fec] py-2 rounded-lg text-white"
-        >
-          Close
-        </button>
-      </Modal>
+      )}
     </div>
   );
 };
